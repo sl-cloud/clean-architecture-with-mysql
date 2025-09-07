@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin          # change this
+      POSTGRES_PASSWORD: adminpass  # change this
+      POSTGRES_DB: appdb            # initial DB
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: steve@etopsolutions.com  # login email for pgAdmin
+      PGADMIN_DEFAULT_PASSWORD: adminpass      # login password for pgAdmin
+    ports:
+      - "8081:80"  # access pgAdmin at http://localhost:8081
+    depends_on:
+      - postgres
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
