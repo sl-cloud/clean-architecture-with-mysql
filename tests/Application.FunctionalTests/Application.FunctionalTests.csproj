@@ -34,7 +34,8 @@
       <PackageReference Include="Respawn" />
       <PackageReference Include="Shouldly" />
       <PackageReference Include="System.Configuration.ConfigurationManager" />
-      <PackageReference Include="Testcontainers.PostgreSql" />
+      <PackageReference Include="Testcontainers.MySql" />
+      <PackageReference Include="MySqlConnector" />
     </ItemGroup>
     
     <ItemGroup>
