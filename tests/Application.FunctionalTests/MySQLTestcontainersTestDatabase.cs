@@ -2,38 +2,41 @@
 using api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.Configuration;
-using Npgsql;
+using MySqlConnector;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Respawn;
+using Testcontainers.MySql;
 
 namespace api.Application.FunctionalTests;
 
-public class PostgreSQLTestDatabase : ITestDatabase
+public class MySQLTestcontainersTestDatabase : ITestDatabase
 {
-    private readonly string _connectionString = null!;
-    private NpgsqlConnection _connection = null!;
+    private const string DefaultDatabase = "apiTestDb";
+    private readonly MySqlContainer _container;
+    private DbConnection _connection = null!;
+    private string _connectionString = null!;
     private Respawner _respawner = null!;
 
-    public PostgreSQLTestDatabase()
+    public MySQLTestcontainersTestDatabase()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json")
-            .AddEnvironmentVariables()
+        _container = new MySqlBuilder()
+            .WithDatabase(DefaultDatabase)
+            .WithUsername("root")
+            .WithPassword("root")
+            .WithAutoRemove(true)
             .Build();
-
-        var connectionString = configuration.GetConnectionString("apiDb");
-
-        Guard.Against.Null(connectionString);
-
-        _connectionString = connectionString;
     }
 
     public async Task InitialiseAsync()
     {
-        _connection = new NpgsqlConnection(_connectionString);
+        await _container.StartAsync();
+
+        _connectionString = _container.GetConnectionString();
+
+        _connection = new MySqlConnection(_connectionString);
 
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseNpgsql(_connectionString)
+            .UseMySql(_connectionString, ServerVersion.AutoDetect(_connectionString))
             .ConfigureWarnings(warnings => warnings.Log(RelationalEventId.PendingModelChangesWarning))
             .Options;
 
@@ -45,7 +48,7 @@ public class PostgreSQLTestDatabase : ITestDatabase
         await _connection.OpenAsync();
         _respawner = await Respawner.CreateAsync(_connection, new RespawnerOptions
         {
-            DbAdapter = DbAdapter.Postgres
+            DbAdapter = DbAdapter.MySql
         });
         await _connection.CloseAsync();
     }
@@ -70,5 +73,6 @@ public class PostgreSQLTestDatabase : ITestDatabase
     public async Task DisposeAsync()
     {
         await _connection.DisposeAsync();
+        await _container.DisposeAsync();
     }
 }
