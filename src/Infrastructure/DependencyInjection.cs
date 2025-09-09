@@ -25,7 +25,20 @@ public static class DependencyInjection
         builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+            
+            // Use a fallback server version during design-time to avoid connection issues during build/NSwag generation
+            ServerVersion serverVersion;
+            try
+            {
+                serverVersion = ServerVersion.AutoDetect(connectionString);
+            }
+            catch
+            {
+                // Fallback to a known server version when auto-detection fails (e.g., during build/design-time)
+                serverVersion = ServerVersion.Create(8, 0, 0, Pomelo.EntityFrameworkCore.MySql.Infrastructure.ServerType.MySql);
+            }
+            
+            options.UseMySql(connectionString, serverVersion);
             options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 

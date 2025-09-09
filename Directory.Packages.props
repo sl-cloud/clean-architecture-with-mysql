@@ -43,8 +43,8 @@
 
     
     
-    <PackageVersion Include="MySqlConnector" Version="2.3.6" />
-    <PackageVersion Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0-rtm.1" />
+    <PackageVersion Include="MySqlConnector" Version="2.4.0" />
+    <PackageVersion Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
     <PackageVersion Include="Testcontainers.MySql" Version="4.0.0" />
     
     

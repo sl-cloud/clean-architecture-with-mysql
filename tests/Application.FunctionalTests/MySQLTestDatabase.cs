@@ -1,5 +1,4 @@
-﻿using System;
-using System.Data.Common;
+﻿using System.Data.Common;
 using api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -19,40 +18,30 @@ public class MySQLTestDatabase : ITestDatabase
     public MySQLTestDatabase()
     {
         var configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json")
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
             .AddEnvironmentVariables("TEST_")
             .Build();
 
         var connectionString = configuration.GetConnectionString("apiDb");
 
-        Guard.Against.Null(connectionString);
+        Guard.Against.Null(connectionString, message: "Connection string 'apiDb' not found in appsettings.json");
 
-        var builder = new MySqlConnectionStringBuilder(connectionString);
-
-        if (string.IsNullOrWhiteSpace(builder.Password))
-        {
-            builder.Password = "adminpass";
-        }
-
-        _connectionString = builder.ConnectionString;
+        _connectionString = connectionString;
     }
 
     public async Task InitialiseAsync()
     {
-        Guard.Against.False(
-            _connectionString.Contains("Password=", StringComparison.OrdinalIgnoreCase),
-            "Database connection string must contain a password.");
-
         _connection = new MySqlConnection(_connectionString);
 
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseMySql(_connectionString, ServerVersion.AutoDetect(_connectionString))
-            .ConfigureWarnings(warnings => warnings.Log(RelationalEventId.PendingModelChangesWarning))
+            .UseMySql(_connectionString, GetServerVersion(_connectionString))
+            .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning))
             .Options;
 
         var context = new ApplicationDbContext(options);
 
-        await context.Database.EnsureDeletedAsync();
+        // Only ensure database exists, don't delete it (requires fewer permissions)
         await context.Database.EnsureCreatedAsync();
 
         await _connection.OpenAsync();
@@ -83,5 +72,19 @@ public class MySQLTestDatabase : ITestDatabase
     public async Task DisposeAsync()
     {
         await _connection.DisposeAsync();
+    }
+
+    private static ServerVersion GetServerVersion(string connectionString)
+    {
+        // Use the same approach as the main application - try auto-detect with fallback
+        try
+        {
+            return ServerVersion.AutoDetect(connectionString);
+        }
+        catch
+        {
+            // Fallback to a known server version when auto-detection fails (same as development)
+            return ServerVersion.Create(8, 0, 0, Pomelo.EntityFrameworkCore.MySql.Infrastructure.ServerType.MySql);
+        }
     }
 }
