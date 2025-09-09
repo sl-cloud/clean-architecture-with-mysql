@@ -128,13 +128,13 @@ resource administratorLoginPasswordSecret 'Microsoft.KeyVault/vaults/secrets@202
   }
 }
 
-var connectionString = 'Server=${mysqldatabase.outputs.MYSQL_DOMAIN_NAME};Port=3306;Database=${databaseNameValue};Uid=mysqlAdmin;Pwd=${dbAdminPassword};SslMode=Required;'
+var mysqlConnectionString = 'Server=${mysqldatabase.outputs.MYSQL_DOMAIN_NAME};Port=3306;Database=${databaseNameValue};Uid=mysqlAdmin;Pwd=${dbAdminPassword};SslMode=Required;'
 
-resource sqlAzureConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+resource mysqlConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   parent: keyVault
   name: dbConnectionStringKey
   properties: {
-    value: connectionString
+    value: mysqlConnectionString
   }
 }
 
