@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿using System;
+using System.Data.Common;
 using api.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -19,18 +20,29 @@ public class MySQLTestDatabase : ITestDatabase
     {
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
-            .AddEnvironmentVariables()
+            .AddEnvironmentVariables("TEST_")
             .Build();
 
         var connectionString = configuration.GetConnectionString("apiDb");
 
         Guard.Against.Null(connectionString);
 
-        _connectionString = connectionString;
+        var builder = new MySqlConnectionStringBuilder(connectionString);
+
+        if (string.IsNullOrWhiteSpace(builder.Password))
+        {
+            builder.Password = "adminpass";
+        }
+
+        _connectionString = builder.ConnectionString;
     }
 
     public async Task InitialiseAsync()
     {
+        Guard.Against.False(
+            _connectionString.Contains("Password=", StringComparison.OrdinalIgnoreCase),
+            "Database connection string must contain a password.");
+
         _connection = new MySqlConnection(_connectionString);
 
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
