@@ -22,7 +22,7 @@ public class MySQLTestcontainersTestDatabase : ITestDatabase
         _container = new MySqlBuilder()
             .WithDatabase(DefaultDatabase)
             .WithUsername("root")
-            .WithPassword("root")
+            .WithPassword("adminpass")
             .WithAutoRemove(true)
             .Build();
     }
