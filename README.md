@@ -1,6 +1,10 @@
 ﻿# api
 
-The project was generated using the [Clean.Architecture.Solution.Template](https://github.com/jasontaylordev/CleanArchitecture) version 9.0.12.
+This project is based on the [Clean.Architecture.Solution.Template](https://github.com/jasontaylordev/CleanArchitecture) version 9.0.12, with the following customizations:
+
+- **Sample data removed** - Stripped down to a clean starting point
+- **Database provider** - Configured to use MySQL instead of the template's default SQL Server
+- **Azure deployment ready** - Includes Bicep templates for Azure App Service and MySQL deployment
 
 ## Build
 
