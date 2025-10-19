@@ -1,37 +1,40 @@
+# Docker Compose file providing a MySQL database with phpMyAdmin for local development.
 version: "3.9"
 
 services:
-  postgres:
-    image: postgres:16
-    container_name: postgres
+  mysql:
+    image: mysql:8
+    container_name: mysql
     restart: unless-stopped
     environment:
-      POSTGRES_USER: admin          # change this
-      POSTGRES_PASSWORD: adminpass  # change this
-      POSTGRES_DB: appdb            # initial DB
+      MYSQL_ROOT_PASSWORD: adminpass  # change this
+      MYSQL_DATABASE: appdb            # initial DB
+      MYSQL_USER: root
+      MYSQL_PASSWORD: adminpass
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     networks:
       - backend
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: pgadmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: steve@etopsolutions.com  # login email for pgAdmin
-      PGADMIN_DEFAULT_PASSWORD: adminpass      # login password for pgAdmin
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: adminpass
     ports:
-      - "8081:80"  # access pgAdmin at http://localhost:8081
+      - "8081:80"  # access phpMyAdmin at http://localhost:8081
     depends_on:
-      - postgres
+      - mysql
     networks:
       - backend
 
 volumes:
-  postgres_data:
+  mysql_data:
 
 networks:
   backend:
