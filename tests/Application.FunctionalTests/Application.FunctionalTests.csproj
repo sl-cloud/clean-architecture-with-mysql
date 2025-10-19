@@ -6,17 +6,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Remove="appsettings.json" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Content Include="appsettings.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </Content>
-    </ItemGroup>
-    <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
       <PackageReference Include="Microsoft.Data.SqlClient" />
       <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -34,7 +23,8 @@
       <PackageReference Include="Respawn" />
       <PackageReference Include="Shouldly" />
       <PackageReference Include="System.Configuration.ConfigurationManager" />
-      <PackageReference Include="Testcontainers.PostgreSql" />
+      <PackageReference Include="Testcontainers.MySql" />
+      <PackageReference Include="MySqlConnector" />
     </ItemGroup>
     
     <ItemGroup>

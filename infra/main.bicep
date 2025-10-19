@@ -29,9 +29,6 @@ param dbName string = ''
 @secure()
 param dbAdminPassword string
 
-@secure()
-param dbAppUserPassword string
-
 var abbrs = loadJsonContent('./abbreviations.json')
 
 // Tags that should be applied to all resources.
@@ -45,6 +42,9 @@ var tags = {
 
 // Generate a unique token to be used in naming resources.
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
+
+var dbConnectionStringKey = 'ConnectionStrings--apiDb'
+var databaseNameValue = !empty(dbName) ? dbName : '${abbrs.dBforMySQLServersDatabases}${resourceToken}'
 
 // Name of the service defined in azure.yaml
 // A tag named azd-service-name with this value should be applied to the service host resource, such as:
@@ -98,10 +98,10 @@ module web 'services/web.bicep' = {
   scope: rg
 }
 
-module pgsqldatabase 'core/database/postgresql/flexibleserver.bicep' = {
-  name: 'pgsql-database'
+module mysqldatabase 'core/database/mysql/flexibleserver.bicep' = {
+  name: 'mysql-database'
   params: {
-    name: !empty(dbServerName) ? dbServerName : '${abbrs.postgreSQLServers}${resourceToken}'
+    name: !empty(dbServerName) ? dbServerName : '${abbrs.dBforMySQLServers}${resourceToken}'
     location: location
     tags: tags
     sku: {
@@ -111,19 +111,32 @@ module pgsqldatabase 'core/database/postgresql/flexibleserver.bicep' = {
     storage: {
       storageSizeGB: 32
     }
-    version: '14'
-    appUserLogin: 'appUser'
-    appUserLoginPassword: dbAppUserPassword
-    administratorLogin: 'pgsqlAdmin'
+    version: '8.0.21'
+    administratorLogin: 'mysqlAdmin'
     administratorLoginPassword: dbAdminPassword
-    databaseName:!empty(dbName) ? dbName : '${abbrs.postgreSQLServersDatabases}${resourceToken}'
+    databaseNames: [ databaseNameValue ]
     allowAzureIPsFirewall: true
-    keyVaultName: keyVault.outputs.name
-    connectionStringKey: 'ConnectionStrings--apiDb'
   }
   scope: rg
 }
 
+resource administratorLoginPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  parent: keyVault
+  name: 'dbAdminPassword'
+  properties: {
+    value: dbAdminPassword
+  }
+}
+
+var mysqlConnectionString = 'Server=${mysqldatabase.outputs.MYSQL_DOMAIN_NAME};Port=3306;Database=${databaseNameValue};Uid=mysqlAdmin;Pwd=${dbAdminPassword};SslMode=Required;'
+
+resource mysqlConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
+  parent: keyVault
+  name: dbConnectionStringKey
+  properties: {
+    value: mysqlConnectionString
+  }
+}
 
 module webKeyVaultAccess 'core/security/keyvault-access.bicep' = {
   name: 'webKeyVaultAccess'
@@ -147,5 +160,5 @@ output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_KEY_VAULT_NAME string = keyVault.outputs.name
 output AZURE_KEY_VAULT_ENDPOINT string = keyVault.outputs.endpoint
 output APPLICATIONINSIGHTS_CONNECTION_STRING string = monitoring.outputs.applicationInsightsConnectionString
-output AZURE_PSQL_CONNECTION_STRING_KEY string = pgsqldatabase.outputs.connectionStringKey
+output AZURE_MYSQL_CONNECTION_STRING_KEY string = dbConnectionStringKey
 output WEB_BASE_URI string = web.outputs.uri

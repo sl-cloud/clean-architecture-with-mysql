@@ -4,9 +4,9 @@ public static class TestDatabaseFactory
 {
     public static async Task<ITestDatabase> CreateAsync()
     {
-        // Using local PostgreSQL database instead of Docker containers
-        // To use Docker containers, switch to `PostgreSQLTestcontainersTestDatabase`
-        var database = new PostgreSQLTestDatabase();
+        // Use Testcontainers - automatically starts MySQL container during tests
+        // Works both locally and in CI/CD without manual Docker setup
+        var database = new MySQLTestcontainersTestDatabase();
 
         await database.InitialiseAsync();
 

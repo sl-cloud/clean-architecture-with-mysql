@@ -1,5 +1,4 @@
-﻿using System.Data.Common;
-using api.Application.Common.Interfaces;
+﻿using api.Application.Common.Interfaces;
 using api.Infrastructure.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -8,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace api.Application.FunctionalTests;
 
@@ -15,12 +15,10 @@ using static Testing;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private readonly DbConnection _connection;
     private readonly string _connectionString;
 
-    public CustomWebApplicationFactory(DbConnection connection, string connectionString)
+    public CustomWebApplicationFactory(string connectionString)
     {
-        _connection = connection;
         _connectionString = connectionString;
     }
 
@@ -41,12 +39,15 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                     mock.SetupGet(x => x.Id).Returns(GetUserId());
                     return mock.Object;
                 });
+            
+            // Reconfigure ApplicationDbContext to use the test database connection string
             services
                 .RemoveAll<DbContextOptions<ApplicationDbContext>>()
                 .AddDbContext<ApplicationDbContext>((sp, options) =>
                 {
                     options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-                    options.UseNpgsql(_connection);
+                    options.UseMySql(_connectionString, ServerVersion.AutoDetect(_connectionString));
+                    options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
                 });
         });
     }
