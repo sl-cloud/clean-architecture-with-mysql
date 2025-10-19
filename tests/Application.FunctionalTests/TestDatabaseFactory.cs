@@ -4,9 +4,9 @@ public static class TestDatabaseFactory
 {
     public static async Task<ITestDatabase> CreateAsync()
     {
-        // Using local MySQL database (same as development environment)
-        // Make sure MySQL is running locally with the correct user credentials
-        var database = new MySQLTestDatabase();
+        // Use Testcontainers - automatically starts MySQL container during tests
+        // Works both locally and in CI/CD without manual Docker setup
+        var database = new MySQLTestcontainersTestDatabase();
 
         await database.InitialiseAsync();
 

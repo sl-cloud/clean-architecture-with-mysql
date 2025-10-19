@@ -13,7 +13,18 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    await app.InitialiseDatabaseAsync();
+    // Try to initialize database, but don't fail if database is not available
+    // (e.g., during NSwag OpenAPI generation in CI/CD pipeline)
+    try
+    {
+        await app.InitialiseDatabaseAsync();
+    }
+    catch (Exception)
+    {
+        // Database not available during build/NSwag generation - this is expected
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogDebug("Database initialization skipped - not available during build");
+    }
 }
 else
 {
